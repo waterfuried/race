@@ -17,7 +17,7 @@ public class Tunnel extends Stage {
         } catch (InterruptedException ex) { ex.printStackTrace(); }
         finally {
             restrict.release();
-            System.out.println(c.getName() + " закончил этап: " + description);
+            System.out.println(c.getName() + " закончил этап: " + getDescription());
         }
     }
 }
