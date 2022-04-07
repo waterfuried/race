@@ -1,16 +1,19 @@
+import java.util.concurrent.CyclicBarrier;
+
 public class Car implements Runnable {
     private static int CARS_COUNT;
-    private Race race;
-    private int speed;
-    private String name;
+    private final Race race;
+    private final int speed;
+    private final String name;
+    private final CyclicBarrier barrier;
 
     static { CARS_COUNT = 0; }
 
-    public Car(Race race, int speed) {
+    public Car(int speed, Race race, CyclicBarrier barrier) {
         this.race = race;
         this.speed = speed;
-        CARS_COUNT++;
-        this.name = "Участник #" + CARS_COUNT;
+        this.name = "Участник #" + ++CARS_COUNT;
+        this.barrier = barrier;
     }
 
     public String getName() { return name; }
@@ -21,8 +24,17 @@ public class Car implements Runnable {
             System.out.println(this.name + " готовится");
             Thread.sleep(500 + (int)(Math.random() * 800));
             System.out.println(this.name + " готов");
-        } catch (Exception e) { e.printStackTrace(); }
-        for (int i = 0; i < race.getStages().size(); i++)
-            race.getStages().get(i).go(this);
+
+            // каждая машина (участник)...
+            // ...ожидает на старте готовности всех других
+            barrier.await();
+
+            // ...проезжает трассу, в первой закончившей - победитель
+            for (Stage stage : race.getStages()) stage.go(this);
+            if (MainClass.winner == null) MainClass.winner = getName();
+
+            // ...ожидает на финише приезда остальных участников
+            barrier.await();
+        } catch (Exception ex) { ex.printStackTrace(); }
     }
 }
